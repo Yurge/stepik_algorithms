@@ -65,6 +65,7 @@ def timed(f, arg, n_iter=50):
 
 
 def compare(fs, args):
+	plt.figure(figsize=(12, 7))
 	for f in fs:
 		plt.plot(args, [timed(f, arg) for arg in args])
 		plt.legend(fs)
