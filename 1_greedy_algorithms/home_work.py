@@ -1,3 +1,7 @@
+import time
+import matplotlib.pyplot as plt
+
+
 # -------------------------------------------------- Жадные алгоритмы ----------------------------------------
 
 # Во время каждой итерации алгоритм выполняет оптимальное действие. Для этого итерируемый объект сначала сортируют
@@ -5,8 +9,8 @@
 
 # 1)
 # Найти такие точки, которые лежат на всех заданных отрезках. Найденное количество точек должно быть минимальным
-def segments_points(items):
-	segments = [[int(s[0]), int(s[1])] for s in [x.split(' ') for x in items]]
+def segments_points(data):
+	segments = [[int(s[0]), int(s[1])] for s in [x.split(' ') for x in data]]
 	segments_sort = sorted(segments, key=lambda x: x[1])
 	points = (segments_sort[0][-1],)
 	for elem in segments_sort:
@@ -52,3 +56,63 @@ def max_cost_bag(items, w):
 
 
 # print(max_cost_bag(data, weight_max))
+
+
+# 3)
+# Требуется вывести максимальное количество слагаемых и сами эти слагаемые, из которых получается число 'num'
+num = 10
+
+def maximum_of_terms(n):
+	result, k = [], 0
+	for elem in range(1, n + 1):
+		if k + elem + elem + 1 > n:
+			result.append(n - k)
+			return f'{len(result)}\n{" ".join(str(x) for x in result)}'
+		result, k = result + [elem], k + elem
+
+
+# print(maximum_of_terms(num))
+
+
+def maximum_of_terms_2(n):
+	result = []
+	summ = 0
+	elem = 1
+	while summ + elem * 2 + 1 <= n:
+		result += [elem]
+		summ += elem
+		elem += 1
+	result.append(n - summ)
+	return f'{len(result)}\n{" ".join(str(x) for x in result)}'
+
+
+# print(maximum_of_terms_2(num))
+
+
+
+
+# -------------------------------------- Проверка времени работы функций --------------------------------------
+
+# функция для замера времени работы подаваемой ей функции
+def timed(func, arg):
+	acc = float('inf')
+	t0 = time.perf_counter()
+	func(arg)
+	t1 = time.perf_counter()
+	acc = t1 - t0
+	return acc
+
+
+#
+def compare(funcs, items):
+	plt.figure(figsize=(12, 7))
+	for func in funcs:
+		result = [timed(func, item) for item in items]
+		plt.plot(items, result)
+	plt.legend(funcs)
+	plt.grid(True)
+	plt.show()
+
+
+# compare([maximum_of_terms, maximum_of_terms_2], range(1, 100))
+
