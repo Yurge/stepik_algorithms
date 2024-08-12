@@ -1,5 +1,7 @@
 import time
+from random import randint
 import matplotlib.pyplot as plt
+from collections import Counter
 
 
 # -------------------------------------------------- Жадные алгоритмы ----------------------------------------
@@ -34,25 +36,27 @@ def segments_points(data):
 
 # 2)
 # Чтобы положить в рюкзак 7 кг продуктов и получить максимальную стоимость рюкзака, нужно отсортировать все продукты
-# при помощи удельного веса (цена 1 кг) и начинать перебирать с самого дорогого.
+# при помощи удельной цены (те цена 1 кг, тк у нас указан вес товара) и начинать перебирать с самого дорогого.
 
 n, weight_max = 3, 7				# Кол-во видов продуктов и максимальный вес рюкзака
 data = ['20 4', '18 3', '14 2']		# 3 вида продуктов. Сумма и общий вес каждого
 
 
 def max_cost_bag(items, w):
-	goods = [[int(s[0]), int(s[1])] for s in [one.split(' ') for one in items]]		# Все продукты
-	key = lambda x: x[0] / x[1]														# Цена 1 кг
-	goods_sort = sorted(goods, key=key, reverse=True)								# Сортируем. По убыванию
-	bag = 0
-	for thing in goods_sort:
-		if thing[1] <= w:
-			bag += thing[0]
-			w -= thing[1]
+	products = [[int(x) for x in one.split(' ')] for one in items]				# Все продукты
+	my_key = lambda x: (x[0] / x[1], x[1])										# сорт по цене за 1 кг и потом по весу
+	products_sort = sorted(products, key=my_key, reverse=True)					# Сортируем. По убыванию
+
+	cost_bag = 0
+	for cost, weight in products_sort:
+		if weight <= w:
+			cost_bag += cost
+			w -= weight
 		else:
-			bag += thing[0] * w / thing[1]
+			cost_bag += cost * w / weight
 			break
-	return f'{bag:.3f}'
+
+	return f'{cost_bag:.3f}'
 
 
 # print(max_cost_bag(data, weight_max))
@@ -94,16 +98,17 @@ def maximum_of_terms_2(n):
 # -------------------------------------- Проверка времени работы функций --------------------------------------
 
 # функция для замера времени работы подаваемой ей функции
-def timed(func, arg):
+def timed(func, arg, iter=50):
 	acc = float('inf')
-	t0 = time.perf_counter()
-	func(arg)
-	t1 = time.perf_counter()
-	acc = t1 - t0
+	for _ in range(iter):
+		t0 = time.perf_counter()
+		func(arg)
+		t1 = time.perf_counter()
+		acc = min(acc, t1 - t0)
 	return acc
 
 
-#
+# подаём две функции и получаем график времени
 def compare(funcs, items):
 	plt.figure(figsize=(12, 7))
 	for func in funcs:
@@ -116,3 +121,64 @@ def compare(funcs, items):
 
 # compare([maximum_of_terms, maximum_of_terms_2], range(1, 100))
 
+
+# Проверим как меняется время работы функции max_cost_bag в зависимости от количества подаваемых данных
+# для этого нужно добавить w = randint(1, 10 ** 3) в функцию timed
+def bags():
+	n = range(1, 40)
+	result = []
+	for ind in n:
+		acc = []
+		for _ in range(ind):
+			acc.append(f'{randint(1, 10 ** 3)} {randint(1, 10 ** 3)}')
+		result.append(timed(max_cost_bag, acc))
+	plt.figure(figsize=(12, 6.5))
+	plt.plot(n, result)
+	plt.grid(True)
+	plt.ylabel('время в секундах')
+	plt.xlabel('количество items поданных в функцию max_cost_bag')
+	plt.show()
+
+
+# bags()
+
+
+
+# 4)
+# Кодировка Хаффмана
+def huffman_decrypt(coder, s, crypt):
+	result, num = '', ''
+	for elem in crypt:
+		num += elem
+		for key, value in coder.items():
+			if num == value:
+				result, num = result + key, ''
+	print(result == s)
+
+
+def huffman_crypt(coder, s):
+	result = ''.join(coder[elem] for elem in s) or '0'
+	print(result)												# выводим закодированную строку
+	return huffman_decrypt(coder, s, result)					# отправим код на расшифровку для проверки
+
+
+def huffman_encode(s):
+	h = [(elem, freq) for elem, freq in Counter(s).items()]
+	coder = {letter: '' for letter in Counter(s)}				# список с ключами-буквами и пустыми значениями
+	if len(h) == 1:
+		coder = {h[0][0]: '0'}
+	while len(h) > 1:
+		h_new = sorted(h, key=lambda x: (x[1], x[0]))			# сортируем полученный список
+		left, right = h_new[:2]									# вытаскиваем первые два элемента
+		for item in left[0]:
+			coder[item] = '0' + coder[item]						# к элементу с меньшей частотой добавляем 0
+		for item in right[0]:
+			coder[item] = '1' + coder[item]						# к элементу с большей частотой добавляем 1
+		h.append((left[0] + right[0], left[1] + right[1]))		# добавляем новый элемент в список
+		h.remove(left)											# удаляем из списка первые два элемента
+		h.remove(right)
+	return huffman_crypt(coder, s)
+
+
+my_str = 'abcd'
+huffman_encode(my_str)
